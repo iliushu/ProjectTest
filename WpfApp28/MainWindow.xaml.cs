@@ -24,7 +24,6 @@ public partial class MainWindow : Window
     }
     private void ChangeTheme_Click(object sender, RoutedEventArgs e)
     {
-        _vm.UpdateConfig("ThemeColor", "#FFFF5000"); // 修改为红色
-        _vm.UpdateConfig("Name", "123"); // 修改为红色
+       
     }
 }

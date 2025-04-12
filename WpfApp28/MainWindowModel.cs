@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 
 namespace WpfApp28
 {
@@ -18,8 +20,8 @@ namespace WpfApp28
 
         public MainWindowModel()
         {
-            Config = new DynamicConfig();
-            LoadConfigFromFile("config.json");
+            Config = new DynamicConfig("config.json");
+            Config.LoadFromDictionary();
             Timer timer = new Timer(aaaa);
             timer.Change(1000, 1000);
         }
@@ -38,55 +40,41 @@ namespace WpfApp28
             //if(num%2==0)
             //UpdateConfig("EnableFeature", true);
             //else UpdateConfig("EnableFeature", false);
+            Config.SetValue("ThemeColor", "#00FF00");
+            Config.SetValue("hobbies", "abcd");
         }
-
-        private void LoadConfigFromFile(string path)
-        {
-            var configDict = Config.LoadJsonIntoDictionary(path);
-            var config = Config.LoadSettingsIntoDictionary(MainWindowModelSet.Default);
-            Config.LoadFromDictionary(configDict);
-        }
-     
-        // 允许手动更新配置值
-        public void UpdateConfig(string key, object value)
-        {
-            //((dynamic)Config)[key] = value;
-            Config.SetValue(key, value);
-            //Config.OnPropertyChanged(key);
-        }
-        public Dictionary<string, object> LoadSettingsIntoDictionary()
-        {
-            var settingsDict = new Dictionary<string, object>();
-            var settings = MainWindowModelSet.Default;
-
-            foreach (SettingsProperty prop in settings.Properties)
-            {
-                object value = settings[prop.Name];
-                settingsDict.Add(prop.Name, value);
-            }
-
-            return settingsDict;
-        }
-       
         public event PropertyChangedEventHandler? PropertyChanged;
     }
 
     public class DynamicConfig : DynamicObject, INotifyPropertyChanged
     {
+        private class DataModel
+        {
+            public string Name  { get; set; }="";
+            public double ScaleFactor { get; set; } = 1;
+            public int UpperLimit { get; set; } = int.MinValue;
+            public int LowerLimit { get; set; } = int.MaxValue;
+        }
         private readonly Dictionary<string, object> _properties = new();
-
+        private readonly Dictionary<string, object> _configDict = new();
+        public DynamicConfig(string path)
+        {
+            _configDict=LoadJsonIntoDictionary(path);
+        }
+        public DynamicConfig(ApplicationSettingsBase settings)
+        {
+            _configDict = LoadSettingsIntoDictionary(settings);
+        }
         public event PropertyChangedEventHandler? PropertyChanged;
         public void SetValue(string key, object value)
         {
             _properties[key] = value; 
             OnPropertyChanged(key);
         }
-
         public object GetValue(string key)
         {
             return _properties.ContainsKey(key) ? _properties[key] : null;
         }
-        // 动态获取属性值
         public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
             return _properties.TryGetValue(binder.Name, out result);
@@ -100,24 +88,36 @@ namespace WpfApp28
         public Dictionary<string, object> LoadSettingsIntoDictionary(ApplicationSettingsBase settings)
         {
             var settingsDict = new Dictionary<string, object>();
-
-            foreach (SettingsProperty prop in settings.Properties)
+            try
             {
-                object value = settings[prop.Name];
-                settingsDict.Add(prop.Name, value);
+                foreach (SettingsProperty prop in settings.Properties)
+                {
+                    object value = settings[prop.Name];
+                    settingsDict.Add(prop.Name, value);
+                }
             }
-
+            catch (Exception)
+            {
+                throw new Exception("配置文件读取失败");
+            }
             return settingsDict;
         }
         public Dictionary<string, object> LoadJsonIntoDictionary(string path)
         {
-            var json = File.ReadAllText(path);
-            var configDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(json)!;
-            return configDict;
+            try
+            {
+                var json = File.ReadAllText(path);
+                var configDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(json)!;
+                return configDict;
+            }
+            catch (Exception)
+            {
+                throw new Exception("配置文件读取失败");
+            }  
         }
-        public void LoadFromDictionary(Dictionary<string, object> config)
+        public void LoadFromDictionary()
         {
-            foreach (var kvp in config)
+            foreach (var kvp in _configDict)
             {
                 _properties[kvp.Key] = kvp.Value;
                 OnPropertyChanged(kvp.Key);
@@ -132,5 +132,4 @@ namespace WpfApp28
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-
 }
