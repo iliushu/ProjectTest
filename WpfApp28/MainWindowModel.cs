@@ -29,12 +29,10 @@ namespace WpfApp28
         private void aaaa(object? state)
         {
             //MessageBox.Show(Config.GetValue("hobbies").ToString());
-
             //foreach (var item in Config.GetDynamicMemberNames())
             //{
             //   MessageBox.Show(Config.GetValue(item.ToString()).ToString());
             //}
-            ;
             //num++;
             //UpdateConfig("Name", num);
             //if(num%2==0)
@@ -56,14 +54,13 @@ namespace WpfApp28
             public int LowerLimit { get; set; } = int.MaxValue;
         }
         private readonly Dictionary<string, object> _properties = new();
-        private readonly Dictionary<string, object> _configDict = new();
         public DynamicConfig(string path)
         {
-            _configDict=LoadJsonIntoDictionary(path);
+            _properties = LoadJsonIntoDictionary(path);
         }
         public DynamicConfig(ApplicationSettingsBase settings)
         {
-            _configDict = LoadSettingsIntoDictionary(settings);
+            _properties = LoadSettingsIntoDictionary(settings);
         }
         public event PropertyChangedEventHandler? PropertyChanged;
         public void SetValue(string key, object value)
@@ -87,28 +84,26 @@ namespace WpfApp28
         }
         public Dictionary<string, object> LoadSettingsIntoDictionary(ApplicationSettingsBase settings)
         {
-            var settingsDict = new Dictionary<string, object>();
             try
             {
                 foreach (SettingsProperty prop in settings.Properties)
                 {
                     object value = settings[prop.Name];
-                    settingsDict.Add(prop.Name, value);
+                    _properties.Add(prop.Name, value);
                 }
             }
             catch (Exception)
             {
                 throw new Exception("配置文件读取失败");
             }
-            return settingsDict;
+            return _properties;
         }
         public Dictionary<string, object> LoadJsonIntoDictionary(string path)
         {
             try
             {
                 var json = File.ReadAllText(path);
-                var configDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(json)!;
-                return configDict;
+                return JsonConvert.DeserializeObject<Dictionary<string, object>>(json)!;
             }
             catch (Exception)
             {
@@ -117,7 +112,7 @@ namespace WpfApp28
         }
         public void LoadFromDictionary()
         {
-            foreach (var kvp in _configDict)
+            foreach (var kvp in _properties)
             {
                 _properties[kvp.Key] = kvp.Value;
                 OnPropertyChanged(kvp.Key);
