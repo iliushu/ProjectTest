@@ -20,6 +20,7 @@ namespace WpfApp29
         public MainWindowModel()
         {
             LoadCommandsFromConfig("CommandsConfig.json");
+            
         }
 
         private void LoadCommandsFromConfig(string filePath)

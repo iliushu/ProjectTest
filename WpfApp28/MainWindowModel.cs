@@ -38,6 +38,15 @@ namespace WpfApp28
             {
                 Console.WriteLine($"属性已更新为新值: {value}");
             });
+
+            // 批量更新示例
+            Config.BeginUpdate();
+            Config.SetValue("ScaleFactor", 2.5);
+            Config.SetValue("UpperLimit", 100);
+            Config.EndUpdate(); // 仅触发一次事件通知
+
+            // 单次更新
+            Config.SetValue("LowerLimit", 0); // 自动判断值变更
         }
         public void YourCustomMethod()
         {
@@ -61,18 +70,30 @@ namespace WpfApp28
         }
         public event PropertyChangedEventHandler? PropertyChanged;
     }
-    
+
     public class DynamicConfig : DynamicObject, INotifyPropertyChanged
     {
         private class DataModel
         {
-            public string Name  { get; set; }="";
+            public string Name { get; set; } = "";
             public double ScaleFactor { get; set; } = 1;
             public int UpperLimit { get; set; } = int.MinValue;
             public int LowerLimit { get; set; } = int.MaxValue;
         }
+        bool _isBatching = false; // 是否处于批量更新状态
         private readonly Dictionary<string, object> _properties = new();
         private readonly Dictionary<string, Action<object>> _propertyCallbacks = new();
+        private HashSet<string> _changedProperties = new();
+        public void BeginUpdate() { _isBatching = true; _changedProperties.Clear(); }
+        public void EndUpdate()
+        {
+            _isBatching = false;
+            foreach (var propName in _changedProperties)
+            {
+                OnPropertyChanged(propName);
+            }
+            _changedProperties.Clear();
+        }
         public DynamicConfig(string path)
         {
             _properties = LoadJsonIntoDictionary(path);
@@ -84,8 +105,13 @@ namespace WpfApp28
         public event PropertyChangedEventHandler? PropertyChanged;
         public void SetValue(string key, object value)
         {
-            _properties[key] = value; 
-            OnPropertyChanged(key);
+            if (_properties.TryGetValue(key, out var oldValue) && Equals(oldValue, value))
+                return;
+            _properties[key] = value;
+            if (_isBatching)
+                _changedProperties.Add(key); // 记录变更属性
+            else
+                OnPropertyChanged(key);      // 非批量模式下立即触发
         }
         public object GetValue(string key)
         {
@@ -133,11 +159,17 @@ namespace WpfApp28
         {
             try
             {
+                BeginUpdate();
                 foreach (var kvp in _properties)
                 {
-                    _properties[kvp.Key] = kvp.Value;
-                    OnPropertyChanged(kvp.Key);
+                    var oldValue = _properties[kvp.Key];
+                    if (!Equals(oldValue, kvp.Value))
+                    {
+                        _properties[kvp.Key] = kvp.Value;
+                        _changedProperties.Add(kvp.Key); // 仅记录实际变更项
+                    }
                 }
+                EndUpdate();
             }
             catch (Exception)
             {
