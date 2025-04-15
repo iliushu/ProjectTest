@@ -24,6 +24,19 @@ namespace WpfApp28
             Config.LoadFromDictionary();
             Timer timer = new Timer(aaaa);
             timer.Change(1000, 1000);
+            // 订阅属性更改事件  方法一
+            Config.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == "UserName")
+                {
+                    // 执行你的方法
+                    YourCustomMethod();
+                }
+            };
+        }
+        public void YourCustomMethod()
+        {
+            MessageBox.Show("属性值已更改！");
         }
         int num = 0;
         private void aaaa(object? state)
@@ -43,7 +56,7 @@ namespace WpfApp28
         }
         public event PropertyChangedEventHandler? PropertyChanged;
     }
-
+    
     public class DynamicConfig : DynamicObject, INotifyPropertyChanged
     {
         private class DataModel
