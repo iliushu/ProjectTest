@@ -33,6 +33,11 @@ namespace WpfApp28
                     YourCustomMethod();
                 }
             };
+            // 订阅属性更改事件  方法三
+            Config.RegisterCallback("UserName", (value) =>
+            {
+                Console.WriteLine($"属性已更新为新值: {value}");
+            });
         }
         public void YourCustomMethod()
         {
@@ -67,6 +72,7 @@ namespace WpfApp28
             public int LowerLimit { get; set; } = int.MaxValue;
         }
         private readonly Dictionary<string, object> _properties = new();
+        private readonly Dictionary<string, Action<object>> _propertyCallbacks = new();
         public DynamicConfig(string path)
         {
             _properties = LoadJsonIntoDictionary(path);
@@ -145,6 +151,14 @@ namespace WpfApp28
         public virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (_propertyCallbacks.TryGetValue(propertyName, out var callback))
+            {
+                callback(_properties[propertyName]);
+            }
+        }
+        public void RegisterCallback(string propertyName, Action<object> callback)
+        {
+            _propertyCallbacks[propertyName] = callback;
         }
     }
 }
