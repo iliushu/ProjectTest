@@ -75,7 +75,6 @@ namespace WpfApp29
     public class DynamicCommandManager : DynamicObject, INotifyPropertyChanged
     {
         private readonly Dictionary<string, ICommand> _commands = new();
-
         public event PropertyChangedEventHandler? PropertyChanged;
 
         // 动态获取命令
@@ -89,42 +88,34 @@ namespace WpfApp29
             result = null;
             return false;
         }
-
         // 动态设置命令
         public void AddCommand(string name, Action execute)
         {
             _commands[name] = new RelayCommand(execute);
             OnPropertyChanged(name);
         }
-
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-
-    // 简单的 RelayCommand 实现
     public class RelayCommand : ICommand
     {
         private readonly Action _execute;
         private readonly Func<bool>? _canExecute;
-
         public RelayCommand(Action execute, Func<bool>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
         }
-
         public bool CanExecute(object? parameter)
         {
             return _canExecute == null || _canExecute();
         }
-
         public void Execute(object? parameter)
         {
             _execute();
         }
-
         public event EventHandler? CanExecuteChanged
         {
             add { CommandManager.RequerySuggested += value; }

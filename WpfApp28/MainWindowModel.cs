@@ -112,10 +112,17 @@ namespace WpfApp28
         }
         public void LoadFromDictionary()
         {
-            foreach (var kvp in _properties)
+            try
             {
-                _properties[kvp.Key] = kvp.Value;
-                OnPropertyChanged(kvp.Key);
+                foreach (var kvp in _properties)
+                {
+                    _properties[kvp.Key] = kvp.Value;
+                    OnPropertyChanged(kvp.Key);
+                }
+            }
+            catch (Exception)
+            {
+                throw new Exception("内容为空");
             }
         }
         public override IEnumerable<string> GetDynamicMemberNames()
