@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -15,12 +17,13 @@ namespace WpfApp29
     class MainWindowModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
-        public DynamicCommandManager Commands { get; } = new();
+        public DynamicCommandManager Commands { get; } 
 
         public MainWindowModel()
         {
-            LoadCommandsFromConfig("CommandsConfig.json");
+            //Commands=new DynamicCommandManager(this, "CommandsConfig.json");
             
+            Commands = new DynamicCommandManager(this, MainWindowModelSet.Default);
         }
 
         private void LoadCommandsFromConfig(string filePath)
@@ -78,6 +81,63 @@ namespace WpfApp29
         private readonly Dictionary<string, ICommand> _commands = new();
         public event PropertyChangedEventHandler? PropertyChanged;
 
+        private readonly object _targetInstance;
+
+        public DynamicCommandManager(object targetInstance, string configFilePath)
+        {
+            _targetInstance = targetInstance;
+            LoadCommandsFromConfig(configFilePath);
+        }
+        public DynamicCommandManager(object targetInstance, ApplicationSettingsBase settings)
+        {
+            _targetInstance = targetInstance;
+            try
+            {
+                foreach (SettingsProperty prop in settings.Properties)
+                {
+                    string value = (string)settings[prop.Name];
+                    var method = _targetInstance.GetType().GetMethod(value, BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (method != null)
+                    {
+                        var action = (Action)Delegate.CreateDelegate(typeof(Action), _targetInstance, method);
+                        AddCommand(prop.Name, action);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                throw new Exception("配置文件读取失败");
+            }
+        }
+        private void LoadCommandsFromConfig(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine("配置文件不存在！");
+                return;
+            }
+
+            var json = File.ReadAllText(filePath);
+            var config = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+
+            if (config != null)
+            {
+                foreach (var kvp in config)
+                {
+                    var commandName = kvp.Key;
+                    var methodName = kvp.Value;
+
+                    // 通过反射找到方法并绑定
+                    var method = _targetInstance.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (method != null)
+                    {
+                        var action = (Action)Delegate.CreateDelegate(typeof(Action), _targetInstance, method);
+                        AddCommand(commandName, action);
+                    }
+                }
+            }
+        }
+
         // 动态获取命令
         public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {
@@ -89,12 +149,14 @@ namespace WpfApp29
             result = null;
             return false;
         }
+
         // 动态设置命令
         public void AddCommand(string name, Action execute)
         {
             _commands[name] = new RelayCommand(execute);
             OnPropertyChanged(name);
         }
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="WpfApp29" GeneratedClassName="MainWindowModelSet">
+  <Profiles />
+  <Settings>
+    <Setting Name="SaveCommand" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Save</Value>
+    </Setting>
+    <Setting Name="LoadCommand" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Load</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

@@ -20,7 +20,8 @@ namespace WpfApp28
 
         public MainWindowModel()
         {
-            Config = new DynamicConfig("config.json");
+            //Config = new DynamicConfig("config.json");
+            Config=new DynamicConfig(MainWindowModelSet.Default);
             Config.LoadFromDictionary();
             Timer timer = new Timer(aaaa);
             timer.Change(1000, 1000);
