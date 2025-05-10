@@ -20,8 +20,8 @@ namespace WpfApp28
 
         public MainWindowModel()
         {
-            //Config = new DynamicConfig("config.json");
-            Config=new DynamicConfig(MainWindowModelSet.Default);
+            Config = new DynamicConfig("config.json");
+            //Config=new DynamicConfig(MainWindowModelSet.Default);
             Config.LoadFromDictionary();
             Timer timer = new Timer(aaaa);
             timer.Change(1000, 1000);
@@ -66,7 +66,18 @@ namespace WpfApp28
             //if(num%2==0)
             //UpdateConfig("EnableFeature", true);
             //else UpdateConfig("EnableFeature", false);
-            Config.SetValue("ThemeColor", "#00FF00");
+          bool ss= (bool) Config.GetValue("aa");
+            bool b = false;
+            if (!ss && !b)
+            {
+                Config.SetValue("aa", true);
+                b = true;
+            }
+            else if (ss && !b)
+            {
+                Config.SetValue("aa", false);
+            }
+                Config.SetValue("ThemeColor", "#00FF00");
             Config.SetValue("hobbies", "abcd");
         }
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -116,7 +127,14 @@ namespace WpfApp28
         }
         public object GetValue(string key)
         {
-            return _properties.ContainsKey(key) ? _properties[key] : null;
+            try
+            {
+                return _properties.ContainsKey(key) ? _properties[key] : null;
+            }
+            catch (Exception)
+            {
+                return null; // 返回null而不是抛出异常
+            }
         }
         public override bool TryGetMember(GetMemberBinder binder, out object? result)
         {

@@ -82,5 +82,17 @@ namespace WpfApp28 {
                 this["UserName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool aa {
+            get {
+                return ((bool)(this["aa"]));
+            }
+            set {
+                this["aa"] = value;
+            }
+        }
     }
 }

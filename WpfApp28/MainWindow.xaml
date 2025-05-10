@@ -11,6 +11,7 @@
         <TextBox Text="{Binding Config.select,Mode=TwoWay}" />
         <Rectangle Fill="{Binding Config.ThemeColor}" Width="100" Height="30"/>
         <TextBlock Text="{Binding Config.FontSize}" FontSize="{Binding Config.FontSize}" />
+        <CheckBox IsChecked="{Binding  Config.aa}"/>
         <ComboBox x:Name="combox" ItemsSource="{Binding Config.hobbies}" Text="{Binding Config.select,Mode=TwoWay}"/>
         <Button  Content="{Binding Config.UserName}" 
                 Click="ChangeTheme_Click" Height="20"/>
